@@ -21,7 +21,7 @@ public class StackBehaviourScript : MonoBehaviour {
 	private GameObject topBlock;
 	private GameObject movingBlock;
 	private bool movingBlockXDir;
-	private Camera theCamera;
+	public Camera theCamera;
 	public GameObject baseBlock; 
 	public UnityEngine.UI.Text scoreLabel;
 	public UnityEngine.UI.Button playButton;
@@ -39,29 +39,42 @@ public class StackBehaviourScript : MonoBehaviour {
 		// reset game settings
 		InitGame();
 
-	
-		// get important refs
-		theCamera = Camera.main;
-
 	}
 
+	// Called once
 	void InitGame() {
-
-		score = 0;
 		state = START_MENU;
 
 		playButtonLabel.text = "Play";
 		playButton.gameObject.SetActive (true);
+
+	}
+		
+	// Called at every Start of game
+	public void StartGame() {
+		score = 0;
+		blockCount = 0;
+
+		// reset camera pos
+		Vector3 cameraPos = new Vector3(-1f,2f,-1f);
+		Quaternion cameraRotation =  Quaternion.Euler(30f, 45f, 0f);
+
+		theCamera.transform.SetPositionAndRotation (cameraPos, cameraRotation);
+
+
+		// destroy all previous child blocks
+		foreach (Transform child in baseBlock.transform) {
+			DestroyObject (child.gameObject);
+		}
+
 		// default topBlock to cube in stack
-		topBlock = transform.gameObject;
+		//topBlock = transform.gameObject;
+		topBlock = NewTopBlock (BLOCK_WIDTH, BLOCK_HEIGHT, BLOCK_WIDTH, 0, BLOCK_WIDTH+BLOCK_HEIGHT/2, 0);
+
 
 		// set Colour of first block
 		topBlock.GetComponent<Renderer>().material.color = new Color(1,0,0);		
 		movingBlockXDir = true;
-
-	}
-		
-	public void StartGame() {
 
 		// init moving block
 		NewMovingBlock();
@@ -73,6 +86,7 @@ public class StackBehaviourScript : MonoBehaviour {
 
 	private void gameOver() {
 		state = GAME_OVER;
+		Destroy (movingBlock);
 		playButtonLabel.text = "Play again?";
 		playButton.gameObject.SetActive (true);
 	}
@@ -242,10 +256,14 @@ public class StackBehaviourScript : MonoBehaviour {
 			
 		// update top block details
 		// create a new topBlock object
-		topBlock = GameObject.CreatePrimitive(PrimitiveType.Cube);
-		topBlock.name = "TopBlock:" + blockCount;
-		topBlock.transform.localScale = new Vector3(xWidth, BLOCK_HEIGHT, zWidth);
-		topBlock.transform.position = new Vector3 (centreX, movingBlock.transform.position.y, centreZ);
+		//topBlock = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		//topBlock.name = "TopBlock:" + blockCount;
+		//topBlock.transform.localScale = new Vector3(xWidth, BLOCK_HEIGHT, zWidth);
+		//topBlock.transform.position = new Vector3 (centreX, movingBlock.transform.position.y, centreZ);
+
+		topBlock = NewTopBlock (xWidth, BLOCK_HEIGHT, zWidth, centreX, movingBlock.transform.position.y, centreZ);
+
+		// update colour
 		Color mColor = movingBlock.GetComponent<Renderer>().material.color;		
 		topBlock.GetComponent<Renderer> ().material.color = mColor;		
 
@@ -260,6 +278,16 @@ public class StackBehaviourScript : MonoBehaviour {
 		// add a new moving block
 		NewMovingBlock();
 		return true;
+	}
+
+	GameObject NewTopBlock(float xWidth,float yWidth, float zWidth, float xPos, float yPos, float zPos) {
+		GameObject newBlock = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		newBlock.name = "TopBlock:" + blockCount;
+		newBlock.transform.localScale = new Vector3(xWidth, yWidth, zWidth);
+		newBlock.transform.position = new Vector3 (xPos, yPos, zPos);
+		// add to BaseBlock
+		newBlock.transform.SetParent(baseBlock.transform);
+		return newBlock;
 	}
 
 	// create a new moving block
@@ -295,6 +323,8 @@ public class StackBehaviourScript : MonoBehaviour {
 		// add physics
 		Rigidbody rigidBody = brokenBlock.AddComponent<Rigidbody>();
 		rigidBody.mass = 5;
+
+		brokenBlock.transform.SetParent(baseBlock.transform);
 	}
 
 }
