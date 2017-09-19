@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Experimental.UIElements;
 
 
 public class StackBehaviourScript : MonoBehaviour {
@@ -15,10 +16,13 @@ public class StackBehaviourScript : MonoBehaviour {
 	private string state;
 	private int blockCount =1;
 
+	// GameObjects
 	private GameObject topBlock;
 	private GameObject movingBlock;
 	private bool movingBlockXDir;
 	private Camera theCamera;
+	public UnityEngine.UI.Text scoreLabel;
+
 	private int score;
 
 	private float tileSpeed =1.5f;
@@ -37,15 +41,15 @@ public class StackBehaviourScript : MonoBehaviour {
 		// set Colour of first block
 		topBlock.GetComponent<Renderer>().material.color = new Color(1,0,0);		
 		movingBlockXDir = true;
-		theCamera = Camera.main;
 
+		// get important refs
+		theCamera = Camera.main;
 
 		// init moving block
 		NewMovingBlock();
 
-
 	}
-	
+			
 	// Update is called once per frame
 	void Update () {
 
@@ -76,6 +80,8 @@ public class StackBehaviourScript : MonoBehaviour {
 				Debug.Log ("GAME OVER!");
 			} else {
 				blockCount++;
+				score++;
+				scoreLabel.text = score.ToString ();
 			}
 			tileTransition = 0;
 		} else {
