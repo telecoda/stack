@@ -6,6 +6,7 @@ using UnityEngine.Experimental.UIElements;
 
 public class StackBehaviourScript : MonoBehaviour {
 
+	private const string START_MENU = "startmenu";
 	private const string PLAYING = "playing";
 	private const string GAME_OVER = "gameover";
 		
@@ -21,7 +22,10 @@ public class StackBehaviourScript : MonoBehaviour {
 	private GameObject movingBlock;
 	private bool movingBlockXDir;
 	private Camera theCamera;
+	public GameObject baseBlock; 
 	public UnityEngine.UI.Text scoreLabel;
+	public UnityEngine.UI.Button playButton;
+	public UnityEngine.UI.Text playButtonLabel;
 
 	private int score;
 
@@ -32,9 +36,22 @@ public class StackBehaviourScript : MonoBehaviour {
 
 	void Start () {
 	
-		score = 0;
-		state = PLAYING;
+		// reset game settings
+		InitGame();
 
+	
+		// get important refs
+		theCamera = Camera.main;
+
+	}
+
+	void InitGame() {
+
+		score = 0;
+		state = START_MENU;
+
+		playButtonLabel.text = "Play";
+		playButton.gameObject.SetActive (true);
 		// default topBlock to cube in stack
 		topBlock = transform.gameObject;
 
@@ -42,18 +59,32 @@ public class StackBehaviourScript : MonoBehaviour {
 		topBlock.GetComponent<Renderer>().material.color = new Color(1,0,0);		
 		movingBlockXDir = true;
 
-		// get important refs
-		theCamera = Camera.main;
+	}
+		
+	public void StartGame() {
 
 		// init moving block
 		NewMovingBlock();
 
+		state = PLAYING;
+		playButton.gameObject.SetActive (false);
+
 	}
-			
+
+	private void gameOver() {
+		state = GAME_OVER;
+		playButtonLabel.text = "Play again?";
+		playButton.gameObject.SetActive (true);
+	}
+
 	// Update is called once per frame
 	void Update () {
 
 		switch (state) {
+		case START_MENU:
+			{
+				break;
+			}
 		case PLAYING:
 			{
 				playingUpdate ();
@@ -76,8 +107,7 @@ public class StackBehaviourScript : MonoBehaviour {
 		if (Input.anyKeyDown) {
 			blockAdded = AddCube ();
 			if (!blockAdded) {
-				state = GAME_OVER;
-				Debug.Log ("GAME OVER!");
+				gameOver ();
 			} else {
 				blockCount++;
 				score++;
