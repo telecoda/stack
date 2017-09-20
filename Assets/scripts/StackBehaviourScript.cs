@@ -13,6 +13,7 @@ public class StackBehaviourScript : MonoBehaviour {
 	private const float BLOCK_WIDTH = 1f;
 	private const float BLOCK_HEIGHT = 0.25f;
 	private const float BLOCK_BOUNDS = 1.5f;
+	private const float TOLERANCE = 0.1f;
 
 	private string state;
 	private int blockCount =1;
@@ -22,6 +23,10 @@ public class StackBehaviourScript : MonoBehaviour {
 	private GameObject movingBlock;
 	private bool movingBlockXDir;
 	public Camera theCamera;
+	private Vector3 cameraStartPoint;
+	private Quaternion cameraStartRotation;
+	private Vector3 cameraPanDirection;
+
 	public GameObject baseBlock; 
 	public UnityEngine.UI.Text scoreLabel;
 	public UnityEngine.UI.Button playButton;
@@ -56,10 +61,11 @@ public class StackBehaviourScript : MonoBehaviour {
 		blockCount = 0;
 
 		// reset camera pos
-		Vector3 cameraPos = new Vector3(-1f,2f,-1f);
-		Quaternion cameraRotation =  Quaternion.Euler(30f, 45f, 0f);
+		cameraStartPoint = new Vector3(-1f,2f,-1f);
+		cameraStartRotation =  Quaternion.Euler(30f, 45f, 0f);
+		theCamera.orthographicSize = 2f;
 
-		theCamera.transform.SetPositionAndRotation (cameraPos, cameraRotation);
+		theCamera.transform.SetPositionAndRotation (cameraStartPoint, cameraStartRotation);
 
 
 		// destroy all previous child blocks
@@ -89,6 +95,10 @@ public class StackBehaviourScript : MonoBehaviour {
 		Destroy (movingBlock);
 		playButtonLabel.text = "Play again?";
 		playButton.gameObject.SetActive (true);
+
+		// calc direction of camera to move
+		cameraPanDirection = Vector3.MoveTowards(baseBlock.transform.position,theCamera.transform.position,100);
+
 	}
 
 	// Update is called once per frame
@@ -113,9 +123,17 @@ public class StackBehaviourScript : MonoBehaviour {
 
 	}
 
+	// called every update in GAME_OVER state
 	void gameOverUpdate() {
+		// zoom outwards
+		theCamera.orthographicSize += 0.1f * Time.deltaTime;
+
+
+		// rotate around stack
+		theCamera.transform.RotateAround(Vector3.zero, Vector3.up, 20 * Time.deltaTime);
 	}
 
+	// called every update in PLAYING state
 	void playingUpdate() {
 
 		if (Input.anyKeyDown) {
@@ -142,7 +160,7 @@ public class StackBehaviourScript : MonoBehaviour {
 
 	bool AddCube() {
 
-		// copy moving block to top of stack
+		// Drop moving block onto top of stack
 
 		// calc dimensions of block to add based on size of the overlap between moving block and top block
 
@@ -190,21 +208,27 @@ public class StackBehaviourScript : MonoBehaviour {
 			rMaxZ = tMaxZ;
 		}
 
-//		Debug.Log ("===========================================");
-//		Debug.LogFormat ("Adding block {0}", blockCount + 1);
-//		Debug.Log ("===========================================");
-//		Debug.LogFormat ("mPos: {0} mScale: {1}", mPos, mScale);
-//		Debug.LogFormat ("mMinX: {0} mMaxX: {1}", mMinX, mMaxX);
-//		Debug.LogFormat ("mMinZ: {0} mMaxZ: {1}", mMinZ, mMaxZ);
-//		Debug.LogFormat ("tPos: {0} tScale: {1}", tPos, tScale);
-//		Debug.LogFormat ("tMinX: {0} tMaxX: {1}", tMinX, tMaxX);
-//		Debug.LogFormat ("tMinZ: {0} tMaxZ: {1}", tMinZ, tMaxZ);
-//		Debug.LogFormat ("rMinX: {0} rMaxX: {1}", rMinX, rMaxX);
-//		Debug.LogFormat ("rMinZ: {0} rMaxZ: {1}", rMinZ, rMaxZ);
-//
+		// dimensions of current top block
+		float txWidth = tScale.x;
+		float tzWidth = tScale.z;
+
 		// scale movingBlock
 		float xWidth = rMaxX-rMinX;
 		float zWidth = rMaxZ-rMinZ;
+
+		float xDiff = Mathf.Abs(txWidth-xWidth);
+		float zDiff = Mathf.Abs(tzWidth-zWidth);
+
+		bool perfectDrop = false;
+		// if new width is within tolerance, stay same size
+		if (xDiff <= TOLERANCE && zDiff <= TOLERANCE) {
+			perfectDrop = true;
+			// resize
+			xWidth = txWidth;
+			zWidth = tzWidth;
+			Debug.Log ("Perfect!");
+		} 
+
 
 		if (xWidth < 0 || zWidth < 0) {
 			// Game over
@@ -219,49 +243,48 @@ public class StackBehaviourScript : MonoBehaviour {
 		float bxWidth = mScale.x; 
 		float bzWidth = mScale.z; 
 
-		if (movingBlockXDir) {
-			if (mMaxX >= tMaxX) {
-				// moving block is further than top block
-				centreX = (tMaxX - xWidth/2);
+		if (!perfectDrop) {
+			// add broken block if this is not a perfect drop	
+			if (movingBlockXDir) {
+				if (mMaxX >= tMaxX) {
+					// moving block is further than top block
+					centreX = (tMaxX - xWidth / 2);
 
-				bxWidth = mMaxX - tMaxX;
-				float bxPos = centreX+xWidth/2+bxWidth/2;
-				NewBrokenBlock(bxPos,mPos.y,mPos.z,bxWidth,BLOCK_HEIGHT,bzWidth);
+					bxWidth = mMaxX - tMaxX;
+					float bxPos = centreX + xWidth / 2 + bxWidth / 2;
+					NewBrokenBlock (bxPos, mPos.y, mPos.z, bxWidth, BLOCK_HEIGHT, bzWidth);
+				} else {
+					// moving block is nearer than top block
+					centreX = (mMaxX - xWidth / 2);
+
+					bxWidth = tMinX - mMinX;
+					float bxPos = centreX - xWidth / 2 - bxWidth / 2;
+					NewBrokenBlock (bxPos, mPos.y, mPos.z, bxWidth, BLOCK_HEIGHT, bzWidth);
+				}
 			} else {
-				// moving block is nearer than top block
-				centreX = (mMaxX - xWidth/2);
+				if (mMaxZ >= tMaxZ) {
+					// moving block is further than top block
+					centreZ = (tMaxZ - zWidth / 2);
 
-				bxWidth = tMinX - mMinX;
-				float bxPos = centreX-xWidth/2-bxWidth/2;
-				NewBrokenBlock(bxPos,mPos.y,mPos.z,bxWidth,BLOCK_HEIGHT,bzWidth);
+					bzWidth = mMaxZ - tMaxZ;
+					float bzPos = centreZ + zWidth / 2 + bzWidth / 2;
+					NewBrokenBlock (mPos.x, mPos.y, bzPos, bxWidth, BLOCK_HEIGHT, bzWidth);
+				} else {
+					// moving block is nearer than top block
+					centreZ = (mMaxZ - zWidth / 2);
+
+					bzWidth = tMinZ - mMinZ;
+					float bzPos = centreZ - zWidth / 2 - bzWidth / 2;
+					NewBrokenBlock (mPos.z, mPos.y, bzPos, bxWidth, BLOCK_HEIGHT, bzWidth);
+
+				}
 			}
+			// update top block details
+			topBlock = NewTopBlock (xWidth, BLOCK_HEIGHT, zWidth, centreX, movingBlock.transform.position.y, centreZ);
 		} else {
-			if (mMaxZ >= tMaxZ) {
-				// moving block is further than top block
-				centreZ = (tMaxZ - zWidth/2);
-
-				bzWidth = mMaxZ - tMaxZ;
-				float bzPos = centreZ+zWidth/2+bzWidth/2;
-				NewBrokenBlock(mPos.x,mPos.y,bzPos,bxWidth,BLOCK_HEIGHT,bzWidth);
-			} else {
-				// moving block is nearer than top block
-				centreZ = (mMaxZ - zWidth/2);
-
-				bzWidth = tMinZ - mMinZ;
-				float bzPos = centreZ-zWidth/2-bzWidth/2;
-				NewBrokenBlock(mPos.z,mPos.y,bzPos,bxWidth,BLOCK_HEIGHT,bzWidth);
-
-			}
+			// update top block details
+			topBlock = NewTopBlock (xWidth, BLOCK_HEIGHT, zWidth, tPos.x, movingBlock.transform.position.y, tPos.z);
 		}
-			
-		// update top block details
-		// create a new topBlock object
-		//topBlock = GameObject.CreatePrimitive(PrimitiveType.Cube);
-		//topBlock.name = "TopBlock:" + blockCount;
-		//topBlock.transform.localScale = new Vector3(xWidth, BLOCK_HEIGHT, zWidth);
-		//topBlock.transform.position = new Vector3 (centreX, movingBlock.transform.position.y, centreZ);
-
-		topBlock = NewTopBlock (xWidth, BLOCK_HEIGHT, zWidth, centreX, movingBlock.transform.position.y, centreZ);
 
 		// update colour
 		Color mColor = movingBlock.GetComponent<Renderer>().material.color;		
