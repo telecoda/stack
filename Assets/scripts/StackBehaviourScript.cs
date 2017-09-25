@@ -10,11 +10,12 @@ public class StackBehaviourScript : MonoBehaviour {
 	private const string PLAYING = "playing";
 	private const string GAME_OVER = "gameover";
 		
-	private const float BLOCK_WIDTH = 1f;
+	private const float BLOCK_WIDTH = 1f; 
 	private const float BLOCK_HEIGHT = 0.25f;
-	private const float BLOCK_BOUNDS = 1.5f;
-	private const float TOLERANCE = 0.1f;
-	private const int PERFECT_BONUS = 8;
+	private const float BLOCK_BOUNDS = 1.5f; // how far blocks slide backwards and forwards
+	private const float TOLERANCE = 0.1f; // size you can miss by and still get a perfect block
+	private const int PERFECT_BONUS = 8; // number of perfect blocks to get a growth bonus
+	private const float PERFECT_INCREASE = 0.1f; // size block grows
 
 	private string state;
 	private int blockCount =1;
@@ -27,7 +28,6 @@ public class StackBehaviourScript : MonoBehaviour {
 	private Vector3 cameraStartPoint;
 	private Quaternion cameraStartRotation;
 	private GameObject perfectHalo;
-	private int perfectHaloCount;
 	private Color perfectHaloColor;
 	public Material transparentMaterial;
 
@@ -315,7 +315,24 @@ public class StackBehaviourScript : MonoBehaviour {
 			// update top block details
 			topBlock = NewTopBlock (xWidth, BLOCK_HEIGHT, zWidth, centreX, movingBlock.transform.position.y, centreZ);
 		} else {
-			// update top block details
+			// this was a perfect drop so no slicing
+
+			// if we have enough perfect drops, grow block
+			if (perfectCount >= PERFECT_BONUS) {
+				if(movingBlockXDir) {
+					xWidth += PERFECT_INCREASE;
+				} else {
+					zWidth += PERFECT_INCREASE;
+				}
+				// reset count
+				perfectCount = 0;
+				if(xWidth>BLOCK_WIDTH) {
+					xWidth=BLOCK_WIDTH;
+				}
+				if(zWidth>BLOCK_WIDTH) {
+					zWidth=BLOCK_WIDTH;
+				}
+			}
 			topBlock = NewTopBlock (xWidth, BLOCK_HEIGHT, zWidth, tPos.x, movingBlock.transform.position.y, tPos.z);
 		}
 
