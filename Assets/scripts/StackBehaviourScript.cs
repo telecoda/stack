@@ -154,8 +154,9 @@ public class StackBehaviourScript : MonoBehaviour {
 	// called every update in GAME_OVER state
 	void gameOverUpdate() {
 		// zoom outwards
-		theCamera.orthographicSize += 0.1f * Time.deltaTime;
-
+		if (theCamera.orthographicSize < 10) {
+			theCamera.orthographicSize += 0.5f * Time.deltaTime;
+		}
 
 		// rotate around stack
 		theCamera.transform.RotateAround(Vector3.zero, Vector3.up, 20 * Time.deltaTime);
@@ -275,7 +276,6 @@ public class StackBehaviourScript : MonoBehaviour {
 			xWidth = txWidth;
 			zWidth = tzWidth;
 			perfectCount++;
-			Debug.LogFormat ("Perfect! {0}", perfectCount);
 			NewPerfectHalo ();
 		} else {
 			perfectCount = 0;
