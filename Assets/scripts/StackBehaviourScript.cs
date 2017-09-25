@@ -14,6 +14,7 @@ public class StackBehaviourScript : MonoBehaviour {
 	private const float BLOCK_HEIGHT = 0.25f;
 	private const float BLOCK_BOUNDS = 1.5f;
 	private const float TOLERANCE = 0.1f;
+	private const int PERFECT_BONUS = 8;
 
 	private string state;
 	private int blockCount =1;
@@ -25,7 +26,10 @@ public class StackBehaviourScript : MonoBehaviour {
 	public Camera theCamera;
 	private Vector3 cameraStartPoint;
 	private Quaternion cameraStartRotation;
-	private Vector3 cameraPanDirection;
+	private GameObject perfectHalo;
+	private int perfectHaloCount;
+	private Color perfectHaloColor;
+	public Material transparentMaterial;
 
 	public GameObject baseBlock; 
 	public UnityEngine.UI.Text scoreLabel;
@@ -33,6 +37,7 @@ public class StackBehaviourScript : MonoBehaviour {
 	public UnityEngine.UI.Text playButtonLabel;
 
 	private int score;
+	private int perfectCount;
 
 	private float tileSpeed =1.5f;
 	private float tileTransition = 0.0f;
@@ -50,8 +55,13 @@ public class StackBehaviourScript : MonoBehaviour {
 	void InitGame() {
 		state = START_MENU;
 
+		Screen.orientation = ScreenOrientation.Portrait;
+		Screen.SetResolution (480, 800, false);
+
 		playButtonLabel.text = "Play";
 		playButton.gameObject.SetActive (true);
+
+		baseBlock.GetComponent<Renderer>().material.color = new Color(1,0,0);		
 
 	}
 		
@@ -59,11 +69,12 @@ public class StackBehaviourScript : MonoBehaviour {
 	public void StartGame() {
 		score = 0;
 		blockCount = 0;
+		perfectCount = 0;
 
 		// reset camera pos
-		cameraStartPoint = new Vector3(-1f,2f,-1f);
-		cameraStartRotation =  Quaternion.Euler(30f, 45f, 0f);
-		theCamera.orthographicSize = 2f;
+		cameraStartPoint = new Vector3(-1f,3f,-1f);
+		cameraStartRotation =  Quaternion.Euler(45f, 45f, 0f);
+		theCamera.orthographicSize = 1.5f;
 
 		theCamera.transform.SetPositionAndRotation (cameraStartPoint, cameraStartRotation);
 
@@ -74,9 +85,8 @@ public class StackBehaviourScript : MonoBehaviour {
 		}
 
 		// default topBlock to cube in stack
-		//topBlock = transform.gameObject;
-		topBlock = NewTopBlock (BLOCK_WIDTH, BLOCK_HEIGHT, BLOCK_WIDTH, 0, BLOCK_WIDTH+BLOCK_HEIGHT/2, 0);
-
+		topBlock = NewTopBlock (BLOCK_WIDTH, BLOCK_HEIGHT, BLOCK_WIDTH, 0, BLOCK_WIDTH/2-BLOCK_HEIGHT/2, 0);
+		topBlock.GetComponent<Renderer> ().material = baseBlock.GetComponent<Renderer> ().material;
 
 		// set Colour of first block
 		topBlock.GetComponent<Renderer>().material.color = new Color(1,0,0);		
@@ -92,13 +102,12 @@ public class StackBehaviourScript : MonoBehaviour {
 
 	private void gameOver() {
 		state = GAME_OVER;
-		Destroy (movingBlock);
-		playButtonLabel.text = "Play again?";
+		// drop moving block
+		Rigidbody rigidBody = movingBlock.AddComponent<Rigidbody>();
+		rigidBody.mass = 5;
+
+		playButtonLabel.text = "Again?";
 		playButton.gameObject.SetActive (true);
-
-		// calc direction of camera to move
-		cameraPanDirection = Vector3.MoveTowards(baseBlock.transform.position,theCamera.transform.position,100);
-
 	}
 
 	// Update is called once per frame
@@ -156,6 +165,26 @@ public class StackBehaviourScript : MonoBehaviour {
 				movingBlock.transform.position = new Vector3 (movingBlock.transform.position.x,movingBlock.transform.position.y,Mathf.Sin (tileTransition) * BLOCK_BOUNDS);
 			} 
 		}
+
+		updateAnimations ();
+
+	}
+
+	void updateAnimations() {
+
+		if(perfectHalo != null) {
+			// decrease alpha value
+			perfectHaloColor.a -= 1f * Time.deltaTime;
+			perfectHalo.GetComponent<Renderer> ().material.color = perfectHaloColor;
+
+			if (perfectHaloColor.a < 0.1f) {
+				Destroy (perfectHalo);
+			} else {
+
+			}
+
+		}
+	
 	}
 
 	bool AddCube() {
@@ -226,8 +255,12 @@ public class StackBehaviourScript : MonoBehaviour {
 			// resize
 			xWidth = txWidth;
 			zWidth = tzWidth;
-			Debug.Log ("Perfect!");
-		} 
+			perfectCount++;
+			Debug.LogFormat ("Perfect! {0}", perfectCount);
+			NewPerfectHalo ();
+		} else {
+			perfectCount = 0;
+		}
 
 
 		if (xWidth < 0 || zWidth < 0) {
@@ -321,9 +354,12 @@ public class StackBehaviourScript : MonoBehaviour {
 		movingBlock.name = "MovingBlock";
 		// scale it
 		movingBlock.transform.localScale = topBlock.transform.localScale;
+		movingBlock.transform.localScale = new Vector3(movingBlock.transform.localScale.x,BLOCK_HEIGHT,movingBlock.transform.localScale.z);
 		// add above top block
 		movingBlock.transform.position = new Vector3(topBlock.transform.position.x, topBlock.transform.position.y+BLOCK_HEIGHT, topBlock.transform.position.z);
-		Color tColor = topBlock.GetComponent<Renderer>().material.color;		
+		movingBlock.GetComponent<Renderer> ().material = baseBlock.GetComponent<Renderer> ().material;
+		Color tColor = topBlock.GetComponent<Renderer>().material.color;
+
 		movingBlock.GetComponent<Renderer>().material.color = new Color(tColor.r-0.1f,0,0);		
 
 		// flip dir
@@ -350,4 +386,19 @@ public class StackBehaviourScript : MonoBehaviour {
 		brokenBlock.transform.SetParent(baseBlock.transform);
 	}
 
+	// create a plane beneath the new block added
+	void NewPerfectHalo() {
+
+		// create a new Quad
+		perfectHalo = GameObject.CreatePrimitive(PrimitiveType.Quad);
+		perfectHalo.name = "PerfectHalo";
+		// scale it
+		perfectHalo.transform.localScale = new Vector3(topBlock.transform.localScale.x *1.1f,topBlock.transform.localScale.z *1.1f,1f);
+		// add above top block
+		perfectHalo.transform.position = new Vector3(topBlock.transform.position.x, topBlock.transform.position.y+BLOCK_HEIGHT/2, topBlock.transform.position.z);
+		perfectHalo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+		perfectHaloColor = new Color (1, 1, 1,0.5f);
+		perfectHalo.GetComponent<Renderer> ().material = transparentMaterial;
+		perfectHalo.GetComponent<Renderer> ().material.color = perfectHaloColor;
+	}
 }
