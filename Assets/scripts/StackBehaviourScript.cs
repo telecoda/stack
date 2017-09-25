@@ -9,6 +9,8 @@ public class StackBehaviourScript : MonoBehaviour {
 	private const string START_MENU = "startmenu";
 	private const string PLAYING = "playing";
 	private const string GAME_OVER = "gameover";
+
+	private const string HIGH_SCORE = "highscore";
 		
 	private const float BLOCK_WIDTH = 1f; 
 	private const float BLOCK_HEIGHT = 0.25f;
@@ -33,6 +35,7 @@ public class StackBehaviourScript : MonoBehaviour {
 
 	public GameObject baseBlock; 
 	public UnityEngine.UI.Text scoreLabel;
+	public UnityEngine.UI.Text hiScoreLabel;
 	public UnityEngine.UI.Button playButton;
 	public UnityEngine.UI.Text playButtonLabel;
 
@@ -61,7 +64,9 @@ public class StackBehaviourScript : MonoBehaviour {
 		playButtonLabel.text = "Play";
 		playButton.gameObject.SetActive (true);
 
-		baseBlock.GetComponent<Renderer>().material.color = new Color(1,0,0);		
+		baseBlock.GetComponent<Renderer>().material.color = new Color(1,0,0);
+
+		updateHiScoreLabel ();
 
 	}
 		
@@ -100,11 +105,25 @@ public class StackBehaviourScript : MonoBehaviour {
 
 	}
 
+	private void updateHiScoreLabel() {
+		int highScore = PlayerPrefs.GetInt(HIGH_SCORE);
+		hiScoreLabel.text = "Hi:" + score.ToString ();
+	}
+
 	private void gameOver() {
 		state = GAME_OVER;
 		// drop moving block
 		Rigidbody rigidBody = movingBlock.AddComponent<Rigidbody>();
 		rigidBody.mass = 5;
+
+		// save high score
+		int highScore = PlayerPrefs.GetInt(HIGH_SCORE);
+
+		if (score > highScore) {
+			// update highscore
+			PlayerPrefs.SetInt(HIGH_SCORE,score);
+			updateHiScoreLabel ();
+		}
 
 		playButtonLabel.text = "Again?";
 		playButton.gameObject.SetActive (true);
