@@ -15,12 +15,22 @@ public class StackBehaviourScript : MonoBehaviour {
 	private const float BLOCK_WIDTH = 1f; 
 	private const float BLOCK_HEIGHT = 0.25f;
 	private const float BLOCK_BOUNDS = 1.5f; // how far blocks slide backwards and forwards
-	private const float TOLERANCE = 0.1f; // size you can miss by and still get a perfect block
+	private const float TOLERANCE = 0.05f; // size you can miss by and still get a perfect block
 	private const int PERFECT_BONUS = 8; // number of perfect blocks to get a growth bonus
 	private const float PERFECT_INCREASE = 0.1f; // size block grows
+	private const int TOTAL_COLOURS = 7;
+	private const float TILE_START_SPEED = 1.5f;
+	private const float TILE_SPEED_INCREASE = 0.01f;
+	private float tileSpeed =0.0f;
+	private float tileTransition = 0.0f;
 
 	private string state;
 	private int blockCount =1;
+
+	// colours
+	private Color[] blockColours;
+	private Color currentColour;
+	private int currentColourIndex;
 
 	// GameObjects
 	private GameObject topBlock;
@@ -42,8 +52,7 @@ public class StackBehaviourScript : MonoBehaviour {
 	private int score;
 	private int perfectCount;
 
-	private float tileSpeed =1.5f;
-	private float tileTransition = 0.0f;
+
 
 	private bool blockAdded;
 
@@ -68,6 +77,15 @@ public class StackBehaviourScript : MonoBehaviour {
 
 		updateHiScoreLabel ();
 
+		// init colours to use
+		blockColours = new Color[TOTAL_COLOURS];
+		blockColours [0] = new Color (1f, 0f, 0f);
+		blockColours [1] = new Color (0f, 1f, 0f);
+		blockColours [2] = new Color (0f, 0f, 1f);
+		blockColours [3] = new Color (1f, 1f, 0f);
+		blockColours [4] = new Color (1f, 0f, 1f);
+		blockColours [5] = new Color (0f, 1f, 1f);
+		blockColours [6] = new Color (1f, 1f, 1f);
 	}
 		
 	// Called at every Start of game
@@ -75,6 +93,7 @@ public class StackBehaviourScript : MonoBehaviour {
 		score = 0;
 		blockCount = 0;
 		perfectCount = 0;
+		tileSpeed = TILE_START_SPEED;
 
 		// reset camera pos
 		cameraStartPoint = new Vector3(-1f,3f,-1f);
@@ -93,8 +112,11 @@ public class StackBehaviourScript : MonoBehaviour {
 		topBlock = NewTopBlock (BLOCK_WIDTH, BLOCK_HEIGHT, BLOCK_WIDTH, 0, BLOCK_WIDTH/2-BLOCK_HEIGHT/2, 0);
 		topBlock.GetComponent<Renderer> ().material = baseBlock.GetComponent<Renderer> ().material;
 
+		currentColourIndex = TOTAL_COLOURS-1;
+		NextColour ();
+
 		// set Colour of first block
-		topBlock.GetComponent<Renderer>().material.color = new Color(1,0,0);		
+		topBlock.GetComponent<Renderer>().material.color = currentColour;		
 		movingBlockXDir = true;
 
 		// init moving block
@@ -107,7 +129,7 @@ public class StackBehaviourScript : MonoBehaviour {
 
 	private void updateHiScoreLabel() {
 		int highScore = PlayerPrefs.GetInt(HIGH_SCORE);
-		hiScoreLabel.text = "Hi:" + score.ToString ();
+		hiScoreLabel.text = "Hi:" + highScore.ToString ();
 	}
 
 	private void gameOver() {
@@ -173,6 +195,8 @@ public class StackBehaviourScript : MonoBehaviour {
 				blockCount++;
 				score++;
 				scoreLabel.text = score.ToString ();
+				// speed up
+				tileSpeed += TILE_SPEED_INCREASE;
 			}
 			tileTransition = 0;
 		} else {
@@ -394,12 +418,48 @@ public class StackBehaviourScript : MonoBehaviour {
 		// add above top block
 		movingBlock.transform.position = new Vector3(topBlock.transform.position.x, topBlock.transform.position.y+BLOCK_HEIGHT, topBlock.transform.position.z);
 		movingBlock.GetComponent<Renderer> ().material = baseBlock.GetComponent<Renderer> ().material;
-		Color tColor = topBlock.GetComponent<Renderer>().material.color;
+		//Color tColor = topBlock.GetComponent<Renderer>().material.color;
 
-		movingBlock.GetComponent<Renderer>().material.color = new Color(tColor.r-0.1f,0,0);		
+		FadeColour ();
+
+		movingBlock.GetComponent<Renderer> ().material.color = currentColour;		
 
 		// flip dir
 		movingBlockXDir = !movingBlockXDir;
+
+	}
+
+	void FadeColour() {
+		// decrease colour attributes
+		if (currentColour.r > 0) {
+			currentColour.r -= 0.1f;
+			if (currentColour.r < 0.5f) {
+				NextColour ();
+			}
+		}
+		if (currentColour.g > 0) {
+			currentColour.g -= 0.1f;
+			if (currentColour.g < 0.5f) {
+				NextColour ();
+			}
+		}
+		if (currentColour.b > 0) {
+			currentColour.b -= 0.1f;
+			if (currentColour.b < 0.5f) {
+				NextColour ();
+			}
+		}
+	}
+
+	void NextColour() {
+		// increment current colour
+		currentColourIndex++;
+		if (currentColourIndex >= TOTAL_COLOURS - 1) {
+			currentColourIndex = 0;
+		}
+
+		// create a copy of colour so it can be modified
+		currentColour = new Color(blockColours [currentColourIndex].r,blockColours [currentColourIndex].g,blockColours [currentColourIndex].b);
 
 	}
 
@@ -412,8 +472,7 @@ public class StackBehaviourScript : MonoBehaviour {
 		// scale it
 		brokenBlock.transform.localScale  = new Vector3(xScale,yScale,zScale);
 		brokenBlock.transform.position = new Vector3(xPos,yPos,zPos);
-		Color tColor = topBlock.GetComponent<Renderer>().material.color;		
-		brokenBlock.GetComponent<Renderer>().material.color = new Color(tColor.r-0.1f,0,0);	
+		brokenBlock.GetComponent<Renderer> ().material.color = currentColour;
 
 		// add physics
 		Rigidbody rigidBody = brokenBlock.AddComponent<Rigidbody>();
