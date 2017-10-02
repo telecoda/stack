@@ -49,6 +49,10 @@ public class StackBehaviourScript : MonoBehaviour {
 	public UnityEngine.UI.Button playButton;
 	public UnityEngine.UI.Text playButtonLabel;
 
+	// audio
+	public AudioClip[] notes;
+	public AudioSource audioSource;
+
 	private int score;
 	private int perfectCount;
 
@@ -72,6 +76,7 @@ public class StackBehaviourScript : MonoBehaviour {
 
 		playButtonLabel.text = "Play";
 		playButton.gameObject.SetActive (true);
+		hiScoreLabel.gameObject.SetActive (true);
 
 		baseBlock.GetComponent<Renderer>().material.color = new Color(1,0,0);
 
@@ -109,7 +114,7 @@ public class StackBehaviourScript : MonoBehaviour {
 		}
 
 		// default topBlock to cube in stack
-		topBlock = NewTopBlock (BLOCK_WIDTH, BLOCK_HEIGHT, BLOCK_WIDTH, 0, BLOCK_WIDTH/2-BLOCK_HEIGHT/2, 0);
+		topBlock = NewTopBlock (BLOCK_WIDTH, BLOCK_HEIGHT, BLOCK_WIDTH, 0, BLOCK_WIDTH+BLOCK_HEIGHT/2, 0);
 		topBlock.GetComponent<Renderer> ().material = baseBlock.GetComponent<Renderer> ().material;
 
 		currentColourIndex = TOTAL_COLOURS-1;
@@ -119,11 +124,15 @@ public class StackBehaviourScript : MonoBehaviour {
 		topBlock.GetComponent<Renderer>().material.color = currentColour;		
 		movingBlockXDir = true;
 
+		if (movingBlock != null) {
+			DestroyObject(movingBlock);
+		}
 		// init moving block
 		NewMovingBlock();
 
 		state = PLAYING;
 		playButton.gameObject.SetActive (false);
+		hiScoreLabel.gameObject.SetActive (false);
 
 	}
 
@@ -149,6 +158,7 @@ public class StackBehaviourScript : MonoBehaviour {
 
 		playButtonLabel.text = "Again?";
 		playButton.gameObject.SetActive (true);
+		hiScoreLabel.gameObject.SetActive (true);
 	}
 
 	// Update is called once per frame
@@ -181,7 +191,7 @@ public class StackBehaviourScript : MonoBehaviour {
 		}
 
 		// rotate around stack
-		theCamera.transform.RotateAround(Vector3.zero, Vector3.up, 20 * Time.deltaTime);
+		theCamera.transform.RotateAround(Vector3.zero, Vector3.up, 25 * Time.deltaTime);
 	}
 
 	// called every update in PLAYING state
@@ -300,6 +310,7 @@ public class StackBehaviourScript : MonoBehaviour {
 			xWidth = txWidth;
 			zWidth = tzWidth;
 			perfectCount++;
+			PlayNextNote ();
 			NewPerfectHalo ();
 		} else {
 			perfectCount = 0;
@@ -495,5 +506,9 @@ public class StackBehaviourScript : MonoBehaviour {
 		perfectHaloColor = new Color (1, 1, 1,0.5f);
 		perfectHalo.GetComponent<Renderer> ().material = transparentMaterial;
 		perfectHalo.GetComponent<Renderer> ().material.color = perfectHaloColor;
+	}
+
+	void PlayNextNote() {
+		audioSource.PlayOneShot (notes [perfectCount - 1]);
 	}
 }
