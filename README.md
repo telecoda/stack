@@ -6,12 +6,16 @@ I developed this with the sole purpose of learning some Unity coding.
 It's a pretty basic implementation, but the code is all here for anyone else to reference.
 
 ##Menu
-<img src="./Assets/screenshots/menu-screen.png" width="400px">
-##Playing
-<img src="./Assets/screenshots/playing-screen.png" width="400px">
-##Game over
-<img src="./Assets/screenshots/game-over-screen.png" width="400px">
 
+<img src="./Assets/screenshots/menu-screen.png" width="400px">
+
+##Playing
+
+<img src="./Assets/screenshots/playing-screen.png" width="400px">
+
+##Game over
+
+<img src="./Assets/screenshots/game-over-screen.png" width="400px">
 
 #References
 - **Font:** nimavisual-moonhouse [http://www.fontspace.com/nimavisual/moonhouse](http://www.fontspace.com/nimavisual/moonhouse)
