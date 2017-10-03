@@ -5,19 +5,19 @@ I developed this with the sole purpose of learning some Unity coding.
 
 It's a pretty basic implementation, but the code is all here for anyone else to reference.
 
-##Menu
+## Menu
 
-<img src="./Assets/screenshots/menu-screen.png" width="400px">
+<img src="./Assets/screenshots/menu-screen.png" width="400px"/>
 
-##Playing
+## Playing
 
-<img src="./Assets/screenshots/playing-screen.png" width="400px">
+<img src="./Assets/screenshots/playing-screen.png" width="400px"/>
 
-##Game over
+## Game over
 
-<img src="./Assets/screenshots/game-over-screen.png" width="400px">
+<img src="./Assets/screenshots/game-over-screen.png" width="400px"/>
 
-#References
+# References
 - **Font:** nimavisual-moonhouse [http://www.fontspace.com/nimavisual/moonhouse](http://www.fontspace.com/nimavisual/moonhouse)
 - **Skybox:** [https://www.assetstore.unity3d.com/en/#!/publisher/4555](https://www.assetstore.unity3d.com/en/#!/publisher/4555)
 - **Video:** [Making Android Stack Game](https://www.youtube.com/watch?v=I19cC_HcyC0) This video was a good reference for getting started.
