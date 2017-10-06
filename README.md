@@ -5,6 +5,8 @@ I developed this with the sole purpose of learning some Unity coding.
 
 It's a pretty basic implementation, but the code is all here for anyone else to reference.
 
+Play it here [Android App store](https://play.google.com/store/apps/details?id=com.Telecoda.Stack)
+
 ## Menu
 
 <img src="./Assets/screenshots/menu-screen.png" width="400px"/>
